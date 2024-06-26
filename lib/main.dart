@@ -18,7 +18,8 @@ class MyApp extends StatelessWidget {
         title: 'Namer App',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple, brightness: Brightness.light),
         ),
         home: MyHomePage(),
       ),
@@ -44,6 +45,11 @@ class MyAppState extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  void removeFavourite(WordPair fav) {
+    favourites.remove(fav);
+    notifyListeners();
+  }
 }
 
 class MyHomePage extends StatefulWidget {
@@ -66,34 +72,70 @@ class _MyHomePageState extends State<MyHomePage> {
         throw UnimplementedError('no widget for $selectedIndex');
     }
 
-    return LayoutBuilder(builder: (context, constraints) {
-      return Scaffold(
-        body: Row(
-          children: [
-            SafeArea(
-                child: NavigationRail(
-              extended: constraints.maxWidth >= 640,
-              destinations: [
-                NavigationRailDestination(
-                    icon: Icon(Icons.home), label: Text("Home")),
-                NavigationRailDestination(
-                    icon: Icon(Icons.favorite), label: Text("Favourites"))
-              ],
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (value) {
-                setState(() {
-                  selectedIndex = value;
-                });
-              },
-            )),
-            Expanded(
-                child: Container(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    child: page)),
-          ],
-        ),
-      );
-    });
+    var mainArea = ColoredBox(
+      color: Theme.of(context).colorScheme.surfaceDim,
+      child: AnimatedSwitcher(
+        duration: Duration(milliseconds: 200),
+        child: page,
+      ),
+    );
+
+    var navItems = [
+      {"icon": Icon(Icons.home), "label": "Home"},
+      {"icon": Icon(Icons.favorite), "label": "Favourites"},
+    ];
+
+    return Scaffold(
+      body: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth < 400) {
+          return Column(
+            children: [
+              Expanded(child: mainArea),
+              BottomNavigationBar(
+                items: [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home),
+                    label: "Home",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.favorite),
+                    label: "Favourites",
+                  )
+                ],
+                currentIndex: selectedIndex,
+                onTap: (value) {
+                  setState(() {
+                    selectedIndex = value;
+                  });
+                },
+              ),
+            ],
+          );
+        } else {
+          return Row(
+            children: [
+              SafeArea(
+                  child: NavigationRail(
+                extended: constraints.maxWidth >= 640,
+                destinations: [
+                  NavigationRailDestination(
+                      icon: Icon(Icons.home), label: Text("Home")),
+                  NavigationRailDestination(
+                      icon: Icon(Icons.favorite), label: Text("Favourites"))
+                ],
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (value) {
+                  setState(() {
+                    selectedIndex = value;
+                  });
+                },
+              )),
+              Expanded(child: mainArea),
+            ],
+          );
+        }
+      }),
+    );
   }
 }
 
@@ -168,8 +210,11 @@ class BigCard extends StatelessWidget {
       elevation: 12,
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Text(pair.asLowerCase,
-            semanticsLabel: "${pair.first} ${pair.second}", style: style),
+        child: AnimatedSize(
+          duration: Duration(milliseconds: 100),
+          child: Text(pair.asLowerCase,
+              semanticsLabel: "${pair.first} ${pair.second}", style: style),
+        ),
       ),
     );
   }
